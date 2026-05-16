@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Wallet, 
-  Plus, 
   ShoppingCart, 
   Pizza, 
   Car, 
@@ -11,11 +10,8 @@ import {
   X,
   TrendingUp,
   ArrowDownCircle,
-  ArrowUpCircle,
-  Receipt,
   Camera,
   DollarSign,
-  Sparkles,
   Loader2,
   Mic,
   Volume2,
@@ -23,7 +19,6 @@ import {
   Target
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { processVoiceCommand } from '@/lib/commandProcessor';
 import { processReceiptOCR } from '@/lib/ocrProcessor';
 
 interface Transaction {
@@ -239,6 +234,21 @@ export default function App() {
         </div>
       </main>
 
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        accept="image/*" 
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            setPreviewUrl(URL.createObjectURL(file));
+            // Trigger scan automatically
+            setTimeout(handleAIScan, 100);
+          }
+        }}
+      />
+
       <AnimatePresence>
         {isModalOpen && (
           <Modal 
@@ -251,8 +261,6 @@ export default function App() {
             isScanning={isScanning}
             scanMessage={scanMessage}
             previewUrl={previewUrl}
-            setPreviewUrl={setPreviewUrl}
-            handleAIScan={handleAIScan}
             categories={categories}
             fileInputRef={fileInputRef}
           />
@@ -310,7 +318,7 @@ function TransactionRow({ tx, categories }: any) {
   );
 }
 
-function Modal({ onClose, newTx, setNewTx, handleAdd, isListening, handleVoice, isScanning, scanMessage, previewUrl, setPreviewUrl, handleAIScan, categories, fileInputRef }: any) {
+function Modal({ onClose, newTx, setNewTx, handleAdd, isListening, handleVoice, isScanning, scanMessage, previewUrl, categories, fileInputRef }: any) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
       <motion.div 
