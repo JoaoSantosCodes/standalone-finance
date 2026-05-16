@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { processVoiceCommand } from '@/lib/commandProcessor';
+import { processReceiptOCR } from '@/lib/ocrProcessor';
 
 interface Transaction {
   id: string;
@@ -90,17 +91,33 @@ export default function App() {
   };
 
   const handleAIScan = async () => {
-    if (!previewUrl) return;
+    if (!previewUrl || !fileInputRef.current?.files?.[0]) return;
     setIsScanning(true);
-    
-    const steps = ['🔍 Analisando...', '💸 Extraindo...', '✨ Otimizando...'];
-    for (const step of steps) {
-      setScanMessage(step);
-      await new Promise(r => setTimeout(r, 600));
-    }
+    setScanMessage('🔍 Reconhecendo texto...');
 
-    setNewTx({ ...newTx, amount: '342.90', description: 'Supermercado Central', category: 'Mercado' });
-    setIsScanning(false);
+    try {
+      const file = fileInputRef.current.files[0];
+      const result = await processReceiptOCR(file);
+      
+      if (result.success) {
+        setNewTx({
+          ...newTx,
+          amount: result.amount,
+          description: result.description,
+          category: result.category
+        });
+        setScanMessage('✨ Dados extraídos!');
+      } else {
+        setScanMessage('❌ Falha ao ler nota');
+      }
+    } catch (err) {
+      setScanMessage('❌ Erro no scanner');
+    } finally {
+      setTimeout(() => {
+        setIsScanning(false);
+        setScanMessage('');
+      }, 1500);
+    }
   };
 
   const handleVoiceInput = async () => {
