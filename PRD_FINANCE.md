@@ -1,29 +1,23 @@
-# PRD — Finance Standalone (Sniper Dashboard)
+# PRD: Finance Standalone (Sniper Station)
 
-## 🎯 Visão do Produto
-A ferramenta de controle financeiro mais rápida do mercado, focada em "registrar e esquecer", com automação via IA.
+## 🎯 Objetivo
+Velocidade máxima no registro de gastos e controle financeiro tático.
 
----
+## 🚀 Status do Projeto
+- **Fase Atual:** Estágio de Maturidade ✅
+- **Última Atualização:** Integração de **Real OCR (Vision)**.
 
-## 🚀 POC 2: Sniper Dashboard (Inspirado em Expense Drone)
-**Objetivo:** Velocidade absoluta e clareza de fluxo.
+## 🛠️ Funcionalidades Implementadas
 
-### Funcionalidades:
-- [ ] **Quick Action Modal:** Registro ultra-rápido com foco automático no valor.
-- [ ] **Source Badges:** Indicação visual de como o gasto foi inserido (Voz, OCR, Manual).
-- [ ] **Cashflow Health Bar:** Barra de progresso dinâmica que muda de cor conforme o consumo do saldo.
+### POC 2: Standalone Migration
+- [x] Migração para Vite (Performance sub-segundo).
+- [x] Layout Sniper Dashboard.
 
----
+### GMUD 3: Real OCR Vision
+- [x] Integração com **Tesseract.js** para leitura de notas fiscais.
+- [x] Extração automática de Estabelecimento e Valor (R$).
+- [x] Indicadores de origem no histórico (🎙️ Voz, 📸 OCR, ✍️ Manual).
 
-## 📦 GMUD 2: Inteligência Sniper
-**Mudanças Planejadas:**
-- Implementar **OCR Real** (Vision AI) para processamento de cupons fiscais.
-- Refinar o **Processamento de Voz** para entender contextos complexos (ex: "Dividi 100 reais de pizza com o João").
-- Adicionar exportação rápida para contabilidade/planilhas.
-
----
-
-## 🛠️ Requisitos Técnicos
-- **Frontend:** Vite + React (Foco em Performance).
-- **Styling:** Tailwind CSS (Estética Cyber-Tactical).
-- **IA:** OpenAI Whisper / Google Vision API.
+## 📅 Próximos Passos (Backlog)
+- [ ] Exportação de relatórios para CSV/PDF.
+- [ ] Gráficos de pizza por categoria (Chart.js).
