@@ -4,7 +4,7 @@ export interface CommandResponse {
   success: boolean;
   message: string;
   module: 'finance' | 'shopping' | 'kanban' | 'unknown';
-  data?: any;
+  data?: unknown;
 }
 
 export const processVoiceCommand = async (text: string, userId: string): Promise<CommandResponse> => {
