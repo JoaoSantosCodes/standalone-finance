@@ -16,8 +16,10 @@ import {
   Mic,
   Volume2,
   Hand,
-  Target
+  Target,
+  type LucideIcon
 } from 'lucide-react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { processReceiptOCR } from '@/lib/ocrProcessor';
 
@@ -31,17 +33,30 @@ interface Transaction {
   source?: 'voice' | 'ocr' | 'manual';
 }
 
+interface Category {
+  name: string;
+  icon: LucideIcon;
+  color: string;
+}
+
+interface NewTransaction {
+  description: string;
+  amount: string;
+  category: string;
+  type: 'income' | 'expense';
+}
+
 export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newTx, setNewTx] = useState({ 
-    description: '', 
-    amount: '', 
-    category: 'Mercado', 
-    type: 'expense' as 'income' | 'expense' 
+  const [newTx, setNewTx] = useState<NewTransaction>({
+    description: '',
+    amount: '',
+    category: 'Mercado',
+    type: 'expense'
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState('');
@@ -50,7 +65,7 @@ export default function App() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  const categories = [
+  const categories: Category[] = [
     { name: 'Mercado', icon: ShoppingCart, color: 'text-blue-400' },
     { name: 'Lazer', icon: Pizza, color: 'text-gold' },
     { name: 'Saúde', icon: HeartPulse, color: 'text-red-400' },
@@ -64,7 +79,22 @@ export default function App() {
   const balance = totalIncome - totalExpense;
 
   useEffect(() => {
+    let active = true;
+
+    const fetchTransactions = async (userId: string) => {
+      const { data } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
+
+      if (!active) return;
+      if (data) setTransactions(data);
+      setIsLoading(false);
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active) return;
       if (session?.user) {
         setUser(session.user);
         fetchTransactions(session.user.id);
@@ -72,18 +102,9 @@ export default function App() {
         setIsLoading(false);
       }
     });
+
+    return () => { active = false; };
   }, []);
-
-  const fetchTransactions = async (userId: string) => {
-    const { data } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
-
-    if (data) setTransactions(data);
-    setIsLoading(false);
-  };
 
   const handleAIScan = async () => {
     if (!previewUrl || !fileInputRef.current?.files?.[0]) return;
@@ -105,7 +126,7 @@ export default function App() {
       } else {
         setScanMessage('❌ Falha ao ler nota');
       }
-    } catch (err) {
+    } catch {
       setScanMessage('❌ Erro no scanner');
     } finally {
       setTimeout(() => {
@@ -139,7 +160,7 @@ export default function App() {
       };
       mediaRecorder.start();
       setIsListening(true);
-    } catch (err) { alert("Microfone não disponível."); }
+    } catch { alert("Microfone não disponível."); }
   };
 
   const handleAddTransaction = async () => {
@@ -270,7 +291,15 @@ export default function App() {
   );
 }
 
-function StatCard({ label, value, icon: Icon, highlight, tone }: any) {
+interface StatCardProps {
+  label: string;
+  value: number;
+  icon: LucideIcon;
+  highlight?: boolean;
+  tone?: 'success' | 'destructive';
+}
+
+function StatCard({ label, value, icon: Icon, highlight, tone }: StatCardProps) {
   return (
     <div className={`p-6 rounded-[2rem] border transition-all ${highlight ? 'bg-surface-2 border-gold/30 shadow-gold' : 'bg-surface-1 border-border-custom'}`}>
       <div className="flex items-center justify-between mb-4">
@@ -284,8 +313,8 @@ function StatCard({ label, value, icon: Icon, highlight, tone }: any) {
   );
 }
 
-function TransactionRow({ tx, categories }: any) {
-  const categoryData = categories.find((c: any) => c.name === tx.category);
+function TransactionRow({ tx, categories }: { tx: Transaction; categories: Category[] }) {
+  const categoryData = categories.find(c => c.name === tx.category);
   const Icon = categoryData?.icon || ShoppingCart;
   const SourceIcon = tx.source === 'voice' ? Mic : tx.source === 'ocr' ? Camera : Hand;
 
@@ -318,7 +347,21 @@ function TransactionRow({ tx, categories }: any) {
   );
 }
 
-function Modal({ onClose, newTx, setNewTx, handleAdd, isListening, handleVoice, isScanning, scanMessage, previewUrl, categories, fileInputRef }: any) {
+interface ModalProps {
+  onClose: () => void;
+  newTx: NewTransaction;
+  setNewTx: (tx: NewTransaction) => void;
+  handleAdd: () => void;
+  isListening: boolean;
+  handleVoice: () => void;
+  isScanning: boolean;
+  scanMessage: string;
+  previewUrl: string | null;
+  categories: Category[];
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+}
+
+function Modal({ onClose, newTx, setNewTx, handleAdd, isListening, handleVoice, isScanning, scanMessage, previewUrl, categories, fileInputRef }: ModalProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
       <motion.div 
@@ -368,7 +411,7 @@ function Modal({ onClose, newTx, setNewTx, handleAdd, isListening, handleVoice, 
               </div>
               
               <div className="grid grid-cols-2 gap-2">
-                {categories.map((cat: any) => (
+                {categories.map(cat => (
                   <button
                     key={cat.name}
                     onClick={() => setNewTx({...newTx, category: cat.name})}
